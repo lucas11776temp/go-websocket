@@ -11,6 +11,31 @@ import (
 // chats/12
 // http://localhost/chats/12
 
+/*
+
+route := websocket.Route{}
+
+
+route.WsGroup('chats', func (route route.Ws) {
+	route.Ws('/', func(req server.Request, socket server.Connection) {
+		socket.OnReady(func (data []byte) {
+			conn.OnMessage(func(data []byte) {
+				fmt.Println(string(data))
+			})
+		})
+	})
+})
+
+route.Ws('/', func(req server.Request, socket server.Connection) {
+	socket.OnReady(func (data []byte) {
+		conn.OnMessage(func(data []byte) {
+			fmt.Println(string(data))
+		})
+	})
+})
+
+*/
+
 func main() {
 	machine, err := server.Connect("127.0.0.1:4567")
 
