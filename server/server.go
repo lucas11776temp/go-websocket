@@ -4,8 +4,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net"
 	"strings"
+	"websocket/router"
 	"websocket/server/connection"
 	"websocket/server/request"
 	"websocket/server/response"
@@ -24,24 +26,12 @@ type MiddlewareCallback func(conn *connection.Connection) error
 
 type RouteCallback func(request net.Conn)
 
-type Route struct {
-	Path       string
-	Middleware []MiddlewareCallback
-	Routes     RouteCallback
-}
-
-type RouteGroup map[string]Route
-
 type Server struct {
 	Address   string
 	Listener  net.Listener
 	listeners []ConnectionCallback
-	routes    RouteGroup
+	router    router.GroupRoutes
 }
-
-const (
-	CONTINUES = 0x00
-)
 
 // Comment
 func Connect(address string) (Server, error) {
@@ -54,7 +44,7 @@ func Connect(address string) (Server, error) {
 	return Server{
 		Address:  address,
 		Listener: listener,
-		routes:   make(RouteGroup),
+		router:   router.GroupRoutes{},
 	}, nil
 }
 
@@ -65,7 +55,7 @@ func (ctx *Server) Connection(listener ConnectionCallback) {
 
 // Comment
 func (ctx *Server) handshakeReply(req request.Request) error {
-	res := response.Create(req.Connection)
+	res := response.Create(req.Ws())
 
 	secWebsocketKey := req.Header("sec-websocket-key")
 
@@ -86,7 +76,7 @@ func (ctx *Server) handshakeReply(req request.Request) error {
 	res.SetHeader("Connection", "Upgrade")
 	res.SetHeader("Sec-WebSocket-Accept", hashed)
 
-	req.Connection.Key = secWebsocketKey // TODO Testing
+	req.Ws().Key = secWebsocketKey // TODO Testing
 
 	return res.Write([]byte(response.HttpBuilder(&res)))
 }
@@ -113,7 +103,7 @@ func (ctx *Server) handshake(conn net.Conn) (*request.Request, *response.Respons
 		return nil, nil, err
 	}
 
-	res := response.Create(req.Connection)
+	res := response.Create(req.Ws())
 
 	return &req, &res, nil
 }
@@ -127,24 +117,32 @@ func (ctx *Server) newConnection(conn net.Conn) {
 		return
 	}
 
-	for i := 0; i < len(ctx.listeners); i++ {
-		go func() {
-			ctx.listeners[i](req.Connection)
+	route, err := ctx.router.WsRoute(req.Path())
 
-			go func() {
-				req.Emit(connection.EVENT_READY, []byte{})
-
-				req.Connection.Listen()
-			}()
-		}()
+	if err != nil {
+		fmt.Println("Route", req.Path(), "not found")
+		return
 	}
+
+	go func() {
+		for i := 0; i < len(ctx.listeners); i++ {
+			go func() {
+				ctx.listeners[i](req.Ws())
+			}()
+		}
+	}()
+
+	route.Call(req, req.Ws())
+
+	req.Ws().Emit(connection.EVENT_READY, []byte{})
+
+	req.Ws().Listen()
 }
 
 // Comment
-func (ctx *Server) Route(uri string, callback RouteCallback) {
-	ctx.routes[uri] = Route{
-		Path:   uri,
-		Routes: callback,
+func (ctx *Server) Route() *router.Route {
+	return &router.Route{
+		Routes: &ctx.router,
 	}
 }
 

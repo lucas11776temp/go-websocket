@@ -2,7 +2,6 @@ package frame
 
 import (
 	"encoding/binary"
-	"fmt"
 	"math"
 )
 
@@ -45,7 +44,7 @@ func Decode(payload []byte) Frame {
 		return frame
 	}
 
-	fmt.Println("Data Length: ", size, head)
+	// fmt.Println("Data Length: ", size, head)
 
 	if size < 126 {
 		frame.size = size

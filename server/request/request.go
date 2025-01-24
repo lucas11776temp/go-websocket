@@ -16,7 +16,8 @@ type Request struct {
 	path    string
 	headers Headers
 	body    []byte
-	*connection.Connection
+	conn    *net.Conn
+	ws      connection.Connection
 }
 
 type requestInfo struct {
@@ -92,15 +93,26 @@ func Create(conn net.Conn, http string) (Request, error) {
 		return Request{}, err
 	}
 
-	connection := connection.Create(conn)
+	// connection := connection.Create(conn)
 
 	return Request{
-		Connection: &connection,
-		version:    info.version,
-		method:     info.method,
-		path:       info.path,
-		headers:    getHeaders(httpArray),
+		version: info.version,
+		method:  info.method,
+		path:    info.path,
+		headers: getHeaders(httpArray),
+		conn:    &conn,
+		ws:      connection.Create(conn),
 	}, nil
+}
+
+// Comment
+func (ctx *Request) Conn() *net.Conn {
+	return ctx.conn
+}
+
+// Comment
+func (ctx *Request) Ws() *connection.Connection {
+	return &ctx.ws
 }
 
 // Comment
