@@ -95,7 +95,6 @@ func HttpBuilder(response *Response) string {
 	}
 
 	return http + string(response.body) + "\n"
-	// return strings.Join(builder, "\r\n") + "\r\n\r\n" // TODO Must Add data field
 }
 
 // Comment

@@ -145,6 +145,7 @@ func (ctx *Server) newConnection(conn net.Conn) {
 		case response.RESPONSE_TYPE_NEXT:
 			continue
 		default:
+			// TODO MUST RESPONSE WITH SOCKET ERROR
 			res.Send([]byte(response.HttpBuilder(res)))
 			res.Close()
 		}
