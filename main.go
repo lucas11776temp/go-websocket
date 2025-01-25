@@ -12,9 +12,13 @@ import (
 )
 
 // Comment
-func Auth(req *request.Request, res *response.Response, next router.Next) *response.Response {
-	if req.Header("upgrade") == "websocket" {
-		fmt.Println("Middleware Websocket")
+func WebsocketGuard(req *request.Request, res *response.Response, next router.Next) *response.Response {
+	if req.Header("upgrade") != "websocket" {
+		return res.Json(struct {
+			Message string `json:"message"`
+		}{
+			Message: "Page Not Found",
+		}).SetStatus(404)
 	}
 
 	return next()
@@ -28,7 +32,7 @@ func main() {
 	}
 
 	machine.Route().Group("/", func(route *router.Route) {
-		route.Ws("chats/{id}", Moving).Middleware(Auth) // TODO Fix: Does not add Middleware...
+		route.Ws("chats/{id}", Moving).Middleware(WebsocketGuard) // TODO Fix: Does not add Middleware...
 	})
 
 	fmt.Println("Listening:", machine.Address)

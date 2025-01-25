@@ -1,6 +1,7 @@
 package response
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"websocket/server/connection"
@@ -87,7 +88,14 @@ func HttpBuilder(response *Response) string {
 		)
 	}
 
-	return strings.Join(builder, "\r\n") + "\r\n\r\n" // TODO Must Add data field
+	http := strings.Join([]string{strings.Join(builder, "\r\n"), "\r\n"}, "\r\n")
+
+	if string(response.body) == "" {
+		return http
+	}
+
+	return http + string(response.body) + "\n"
+	// return strings.Join(builder, "\r\n") + "\r\n\r\n" // TODO Must Add data field
 }
 
 // Comment
@@ -99,4 +107,22 @@ func (ctx *Response) Send(data []byte) error {
 	}
 
 	return nil
+}
+
+// Comment
+func (ctx *Response) Json(data any) *Response {
+	ctx.Type = RESPONSE_TYPE_JSON
+
+	ctx.SetHeader("Content-Type", "application/json")
+
+	body, err := json.Marshal(data)
+
+	if err != nil {
+		ctx.body = []byte("{}")
+		return ctx
+	}
+
+	ctx.body = body
+
+	return ctx
 }

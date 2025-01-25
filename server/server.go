@@ -110,7 +110,7 @@ func (ctx *Server) handshake(conn net.Conn) (*request.Request, *response.Respons
 
 // Comment
 func (ctx *Server) newConnection(conn net.Conn) {
-	req, _, err := ctx.handshake(conn)
+	req, res, err := ctx.handshake(conn)
 
 	if err != nil {
 		conn.Close()
@@ -134,7 +134,21 @@ func (ctx *Server) newConnection(conn net.Conn) {
 		}
 	}()
 
-	// fmt.Println(route.GetMiddlewares())
+	for _, middleware := range route.GetMiddlewares() {
+		res := middleware(req, res, func() *response.Response {
+			res.Type = response.RESPONSE_TYPE_NEXT
+
+			return res
+		})
+
+		switch res.Type {
+		case response.RESPONSE_TYPE_NEXT:
+			continue
+		default:
+			res.Send([]byte(response.HttpBuilder(res)))
+			res.Close()
+		}
+	}
 
 	route.Call(req, req.Ws())
 

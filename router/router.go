@@ -30,8 +30,8 @@ type Route struct {
 	method      string
 	middlewares Middlewares
 	callback    reflect.Value
-	option      *RouteOption
 	parameters  RouteParams
+	option      *RouteOption
 	Routes      *GroupRoutes
 }
 
@@ -39,7 +39,7 @@ type RouteOption struct {
 	route *Route
 }
 
-type Routes []Route
+type Routes []*Route
 
 type GroupRoutes struct {
 	webRoutes Routes
@@ -97,7 +97,7 @@ func (ctx *GroupRoutes) getRoute(routes *Routes, method string, path string) (*R
 
 		route.parameters = parameters
 
-		return &route, nil
+		return route, nil
 	}
 
 	return nil, errors.New("Route " + path + " is not found")
@@ -124,7 +124,7 @@ func (ctx *RouteOption) Middleware(middleware ...Middleware) *RouteOption {
 func (ctx *Route) addWebRoute(method string, path string, callback WebMethod) *Route {
 	route := ctx.route(method, path, reflect.ValueOf(callback))
 
-	ctx.Routes.webRoutes = append(ctx.Routes.webRoutes, *route)
+	ctx.Routes.webRoutes = append(ctx.Routes.webRoutes, route)
 
 	return route
 }
@@ -133,7 +133,7 @@ func (ctx *Route) addWebRoute(method string, path string, callback WebMethod) *R
 func (ctx *Route) addWsRoute(method string, path string, callback WsMethod) *Route {
 	route := ctx.route(method, path, reflect.ValueOf(callback))
 
-	ctx.Routes.wsRoutes = append(ctx.Routes.wsRoutes, *route)
+	ctx.Routes.wsRoutes = append(ctx.Routes.wsRoutes, route)
 
 	return route
 }
