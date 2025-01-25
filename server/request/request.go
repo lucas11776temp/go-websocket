@@ -10,14 +10,23 @@ import (
 
 type Headers map[string]string
 
+type RouteParams map[string]string
+
 type Request struct {
-	version float32
-	method  string
-	path    string
-	headers Headers
-	body    []byte
-	conn    *net.Conn
-	ws      connection.Connection
+	version    float32
+	method     string
+	path       string
+	headers    Headers
+	body       []byte
+	conn       *net.Conn
+	ws         connection.Connection
+	parameters RouteParams
+}
+
+func (ctx *Request) SetParams(params RouteParams) *Request {
+	ctx.parameters = params
+
+	return ctx
 }
 
 type requestInfo struct {
@@ -128,6 +137,22 @@ func (ctx *Request) Method() string {
 // Comment
 func (ctx *Request) Path() string {
 	return ctx.path
+}
+
+// Comment
+func (ctx *Request) Parameters() RouteParams {
+	return ctx.parameters
+}
+
+// Comment
+func (ctx *Request) Parameter(param string) string {
+	param, ok := ctx.parameters[param]
+
+	if !ok {
+		return ""
+	}
+
+	return param
 }
 
 // Comment

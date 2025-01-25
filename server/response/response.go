@@ -8,7 +8,17 @@ import (
 
 type Headers map[string]string
 
+type ResponseType string
+
+const (
+	RESPONSE_TYPE_NEXT     ResponseType = "next"
+	RESPONSE_TYPE_REDIRECT ResponseType = "redirect"
+	RESPONSE_TYPE_HTML     ResponseType = "html"
+	RESPONSE_TYPE_JSON     ResponseType = "json"
+)
+
 type Response struct {
+	Type     ResponseType
 	status   int16
 	protocol string
 	headers  Headers

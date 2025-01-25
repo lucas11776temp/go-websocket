@@ -124,6 +124,8 @@ func (ctx *Server) newConnection(conn net.Conn) {
 		return
 	}
 
+	req.SetParams(request.RouteParams(route.Parameters()))
+
 	go func() {
 		for i := 0; i < len(ctx.listeners); i++ {
 			go func() {
@@ -131,6 +133,8 @@ func (ctx *Server) newConnection(conn net.Conn) {
 			}()
 		}
 	}()
+
+	// fmt.Println(route.GetMiddlewares())
 
 	route.Call(req, req.Ws())
 
